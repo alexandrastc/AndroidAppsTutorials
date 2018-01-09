@@ -10,6 +10,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 import com.example.alexandra.githubsearch.NetworkUtils;
 
+import java.io.IOException;
 import java.net.URL;
 
 public class MainActivity extends AppCompatActivity {
@@ -67,11 +68,31 @@ public class MainActivity extends AppCompatActivity {
 
     void makeGithubSearchQuery(){
 
+
+        //get text from text edit
         String githubQuery = mSearchBoxEditText.getText().toString();
+
+        //build url using query
         URL githubSearchUrl = NetworkUtils.buildUrl(githubQuery);
+
+        //display url to text view
         mUrlDisplayTextView.setText(githubSearchUrl.toString());
 
+        String githubSearchResults = null;
 
+        try {
+
+            //save search results
+            githubSearchResults = NetworkUtils.getResponseFromHttpUrl(githubSearchUrl);
+
+        } catch (IOException e){
+
+            e.printStackTrace();
+
+        }
+
+        //display search results to text view
+        mSearchResults.setText(githubSearchResults);
 
     }
 }
