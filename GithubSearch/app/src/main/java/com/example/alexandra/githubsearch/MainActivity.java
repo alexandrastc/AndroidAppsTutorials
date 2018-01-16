@@ -1,10 +1,13 @@
 package com.example.alexandra.githubsearch;
 
 import android.content.Context;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -21,6 +24,10 @@ public class MainActivity extends AppCompatActivity {
 
     TextView mSearchResults;
 
+    TextView mErrorMessage;
+
+    ProgressBar mLoadingBar;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -28,15 +35,92 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
+        mErrorMessage = (TextView) findViewById(R.id.tv_error_message_display);
+
         mSearchBoxEditText = (EditText) findViewById(R.id.et_search);
 
         mUrlDisplayTextView = (TextView) findViewById(R.id.tw_url_display);
 
         mSearchResults = (TextView) findViewById(R.id.tv_github_search_results_json);
 
+        mLoadingBar = (ProgressBar) findViewById(R.id.pb_loading_indicator);
+
 
     }
 
+    //method to show json data
+    private void showJsonDataView(){
+
+        //sets the error invisible
+        mErrorMessage.setVisibility(View.INVISIBLE);
+
+        //sets the results visible
+        mSearchResults.setVisibility(View.VISIBLE);
+    }
+
+    //func to show error message
+    private void showErrorMessage(){
+
+        //hide results
+        mSearchResults.setVisibility(View.INVISIBLE);
+
+        //show error
+        mErrorMessage.setVisibility(View.VISIBLE);
+    }
+
+
+
+    //first param is what you give, last what it gives you, sorta
+    public class GithubQueryTask extends AsyncTask<URL, Void, String>{
+
+        @Override
+        protected void onPreExecute() {
+
+            super.onPreExecute();
+
+            //show loading bar
+            mLoadingBar.setVisibility(View.VISIBLE);
+
+        }
+
+        @Override
+        protected String doInBackground(URL... urls) {
+
+            //pass the url
+            URL searchUrl = urls[0];
+
+            //initialize search results
+            String githubSearchResults = null;
+
+            try {
+
+                //save search results
+                githubSearchResults = NetworkUtils.getResponseFromHttpUrl(searchUrl);
+
+            } catch (IOException e){
+
+                e.printStackTrace();
+
+            }
+
+            return githubSearchResults;
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+
+            //hide loading bar when stuff is done loading
+            mLoadingBar.setVisibility(View.INVISIBLE);
+
+            if (s != null && !s.equals("")){
+                showJsonDataView();
+                mSearchResults.setText(s);
+            } else {
+                showErrorMessage();
+            }
+
+        }
+    }
 
     //inflates the menu
     @Override
@@ -78,21 +162,9 @@ public class MainActivity extends AppCompatActivity {
         //display url to text view
         mUrlDisplayTextView.setText(githubSearchUrl.toString());
 
-        String githubSearchResults = null;
+        //execute query in background
+        new GithubQueryTask().execute(githubSearchUrl);
 
-        try {
-
-            //save search results
-            githubSearchResults = NetworkUtils.getResponseFromHttpUrl(githubSearchUrl);
-
-        } catch (IOException e){
-
-            e.printStackTrace();
-
-        }
-
-        //display search results to text view
-        mSearchResults.setText(githubSearchResults);
 
     }
 }

@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Not A Movie Recommendation App</string>
+    <string name="default_search_text">Movie Title:</string>
+    <string name="search">Search</string>
+</resources>
