@@ -6,7 +6,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.net.HttpURLConnection;
 import java.util.Arrays;
 
 /**
@@ -47,22 +46,8 @@ public class DataUtilities {
 
         JSONObject movieJson = new JSONObject(movieJsonString);
 
-        final String MA_MESSAGE_CODE = "cod";
-
-        //checking for errors ( may not work )
-        if(movieJson.has(MA_MESSAGE_CODE)) {
-            int errorCode = movieJson.getInt(MA_MESSAGE_CODE);
-
-            switch (errorCode) {
-                case HttpURLConnection.HTTP_OK:
-                    break;
-                case HttpURLConnection.HTTP_NOT_FOUND:
-                    //bad info
-                    return null;
-                default:
-                    //server down
-                    return null;
-            }
+        if(movieJson.has("Error")){
+            return movieJson.getString("Error");
         }
 
 
