@@ -1,8 +1,8 @@
 package com.example.alexandra.moviesapp;
 
 import android.content.Context;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -13,12 +13,16 @@ import android.widget.TextView;
 
 import java.net.URL;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements
+        android.support.v4.app.LoaderManager.LoaderCallbacks<String> {
 
     EditText mSearchEditText;
     TextView mMovieResults;
     Button mResetButton;
+    private static final int MOVIE_APP_LOADER = 22;
+
     private static final String SEARCH_RESULTS_JSON = "results";
+    private static String SEARCH_QUERY_URL;
 
 
     @Override
@@ -38,10 +42,8 @@ public class MainActivity extends AppCompatActivity {
         });
 
         if(savedInstanceState != null){
-            String jsonSearchResults = savedInstanceState.getString(SEARCH_RESULTS_JSON);
-            mMovieResults.setText(jsonSearchResults);
-        }
 
+        }
 
     }
 
@@ -56,52 +58,67 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    //make task
-    public class MoviesQueryTask extends AsyncTask<URL, Void, String> {
+    @Override
+    public Loader<String> onCreateLoader(int id, final Bundle args) {
+        return new android.support.v4.content.AsyncTaskLoader<String>(this) {
 
-        @Override
-        protected void onPreExecute() {
+            @Override
+            public String loadInBackground() {
 
-            super.onPreExecute();
+                String searchQueryUrlString = args.getString(SEARCH_QUERY_URL);
 
-        }
+                if (searchQueryUrlString == null || searchQueryUrlString.equals("")){
+                    return null;
+                }
 
-        @Override
-        protected String doInBackground(URL... urls) {
+                try {
 
-            //pass the url
-            URL searchUrl = urls[0];
+                    URL movieUrl = new URL(searchQueryUrlString);
 
-            try {
+                    //get search results response from site
+                    String searchResults = NetworkUtilities.getResponseFromHttpUrl(movieUrl);
 
-                //get search results response from site
-                String searchResults = NetworkUtilities.getResponseFromHttpUrl(searchUrl);
+                    //make them look prettier
+                    String simpleJsonResults = DataUtilities.makeJsonPretty(MainActivity.this,
+                            searchResults);
 
-                //make them look prettier
-                String simpleJsonResults = DataUtilities.makeJsonPretty(MainActivity.this,
-                        searchResults);
-
-                return simpleJsonResults;
+                    return simpleJsonResults;
 
 
-            } catch (Exception e){
-                e.printStackTrace();
+                } catch (Exception e){
+                    e.printStackTrace();
+                    return null;
+                }
+
             }
 
-            return null;
+            @Override
+            protected void onStartLoading() {
+                super.onStartLoading();
 
-        }
+                if(args == null){
+                    return ;
+                } else {
 
-        @Override
-        protected void onPostExecute(String s) {
+                }
 
-            if (s!=null && !s.equals("")) {
-                mMovieResults.setText(s);
             }
-
-        }
+        };
     }
 
+    @Override
+    public void onLoadFinished(android.support.v4.content.Loader<String> loader, String data) {
+
+        if (data!=null && !data.equals("")) {
+            mMovieResults.setText(data);
+        }
+
+    }
+
+    @Override
+    public void onLoaderReset(android.support.v4.content.Loader loader) {
+
+    }
 
     void makeMoviesQuery(){
 
@@ -115,8 +132,26 @@ public class MainActivity extends AppCompatActivity {
         URL movieSearchUrl = NetworkUtilities.buildUrl(movieTitle);
 
         //execute in background
-        new MoviesQueryTask().execute(movieSearchUrl);
+        Bundle queryBundle = new Bundle();
+        SEARCH_QUERY_URL = movieSearchUrl.toString();
 
+        queryBundle.putString(SEARCH_QUERY_URL, SEARCH_QUERY_URL);
+
+        android.support.v4.app.LoaderManager loaderManager;
+        loaderManager = getSupportLoaderManager();
+
+        android.support.v4.content.Loader<String> movieappLoader;
+        movieappLoader = loaderManager.getLoader(MOVIE_APP_LOADER);
+
+        if(movieappLoader == null){
+
+            loaderManager.initLoader(MOVIE_APP_LOADER, queryBundle, this).forceLoad();
+
+        } else {
+
+            loaderManager.restartLoader(MOVIE_APP_LOADER, queryBundle, this).forceLoad();
+
+        }
 
     }
 
@@ -138,10 +173,6 @@ public class MainActivity extends AppCompatActivity {
     public void onSaveInstanceState(Bundle outState) {
 
         super.onSaveInstanceState(outState);
-
-        String rawJsonSearchResults = mMovieResults.getText().toString();
-
-        outState.putString(SEARCH_RESULTS_JSON, rawJsonSearchResults);
 
     }
 }
