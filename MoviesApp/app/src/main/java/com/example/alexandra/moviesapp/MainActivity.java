@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -45,6 +46,8 @@ public class MainActivity extends AppCompatActivity implements
 
         }
 
+        getSupportLoaderManager().initLoader(MOVIE_APP_LOADER, null, this);
+
     }
 
 
@@ -61,6 +64,8 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public Loader<String> onCreateLoader(int id, final Bundle args) {
         return new android.support.v4.content.AsyncTaskLoader<String>(this) {
+
+            String mMovieJson;
 
             @Override
             public String loadInBackground() {
@@ -100,8 +105,25 @@ public class MainActivity extends AppCompatActivity implements
                     return ;
                 } else {
 
+                    if(mMovieJson != null){
+                        Log.d("THIS DOES SOMETING?", "Amaze");
+                        deliverResult(mMovieJson);
+                    } else {
+                        Log.d("Do u really" , "want to hurt me "
+                                + "do u really want to make " +
+                                "me cry");
+                        forceLoad();
+                    }
+
                 }
 
+
+            }
+
+            @Override
+            public void deliverResult(String data) {
+                mMovieJson = data;
+                super.deliverResult(data);
             }
         };
     }
@@ -112,6 +134,7 @@ public class MainActivity extends AppCompatActivity implements
         if (data!=null && !data.equals("")) {
             mMovieResults.setText(data);
         }
+
 
     }
 
@@ -145,11 +168,11 @@ public class MainActivity extends AppCompatActivity implements
 
         if(movieappLoader == null){
 
-            loaderManager.initLoader(MOVIE_APP_LOADER, queryBundle, this).forceLoad();
+            loaderManager.initLoader(MOVIE_APP_LOADER, queryBundle, this);
 
         } else {
 
-            loaderManager.restartLoader(MOVIE_APP_LOADER, queryBundle, this).forceLoad();
+            loaderManager.restartLoader(MOVIE_APP_LOADER, queryBundle, this);
 
         }
 
