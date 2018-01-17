@@ -18,6 +18,7 @@ public class MainActivity extends AppCompatActivity {
     EditText mSearchEditText;
     TextView mMovieResults;
     Button mResetButton;
+    private static final String SEARCH_RESULTS_JSON = "results";
 
 
     @Override
@@ -35,6 +36,12 @@ public class MainActivity extends AppCompatActivity {
                 mSearchEditText.setText("");
             }
         });
+
+        if(savedInstanceState != null){
+            String jsonSearchResults = savedInstanceState.getString(SEARCH_RESULTS_JSON);
+            mMovieResults.setText(jsonSearchResults);
+        }
+
 
     }
 
@@ -124,6 +131,17 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+
+        super.onSaveInstanceState(outState);
+
+        String rawJsonSearchResults = mMovieResults.getText().toString();
+
+        outState.putString(SEARCH_RESULTS_JSON, rawJsonSearchResults);
 
     }
 }
